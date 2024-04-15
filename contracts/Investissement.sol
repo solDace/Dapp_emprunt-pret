@@ -22,7 +22,7 @@ contract ContratInvestissement {
     mapping(address => Investissement) public investissements;
 
        function demanderIvestissement(uint256 _montant, uint256 _duree) external payable {
-        require(_montant > address(this).balance, "Fonds insuffisants dans le contrat");
+        require(msg.value > msg.sender.balance, "Solde insuffisant pour l'investissement");
         require(_duree > 0, "La duree doit etre superieure a zero");
         require(!investissements[msg.sender].actif, "Vous avez deja un investissement actif");
 
