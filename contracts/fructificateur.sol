@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.2;
 
-contract TestContract2 {
+contract fructificateur {
     // Variables d'état
     uint256 public contractBalances = 0;
 
@@ -93,7 +93,7 @@ contract TestContract2 {
         contractBalances += montantARecevoir;
         emprunteur[msg.sender].dureeRestante--;
         
-        if (emprunteur[msg.sender].montant == 0) {
+        if (emprunteur[msg.sender].dureeRestante == 0) {
             delete emprunteur[msg.sender];
         }
     }
@@ -108,6 +108,10 @@ contract TestContract2 {
         // Transfert du montant remboursé à l'investisseur
         payable(msg.sender).transfer(montantARecevoir);
         investisseur[msg.sender].dureeRestante--;
+
+        if (investisseur[msg.sender].dureeRestante == 0) {
+            delete investisseur[msg.sender];
+        }
     }
         
     function getContractBalance() public view returns (uint256) {
