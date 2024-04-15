@@ -99,7 +99,7 @@ contract fructificateur {
     }
 
     // recuperation de l'investissement mensuel
-    function retourInvestissement() external {
+    function retourInvestissement() public payable {
         require(investisseur[msg.sender].dureeRestante > 0, "Aucun pret actif trouve");
         
         // Calcul du montant à rembourser chaque mois (capital + intérêts)
