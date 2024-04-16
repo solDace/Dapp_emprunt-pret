@@ -42,7 +42,8 @@ contract fructificateur {
     }
 
     // Prêter des fonds
-    function investirFonds(uint256 amount, uint256 duration) public payable {
+    function investirFonds(uint256 duration) public payable {
+        uint256 amount = msg.value;
         require(amount <= address(msg.sender).balance, "Insufficient funds to lend");
         require(amount > 0, "Amount must be greater than 0");
         require(duration > 0, "Duration must be greater than 0");
@@ -64,11 +65,13 @@ contract fructificateur {
     function emprunterFonds(uint256 amount, uint256 duration) public payable  {
         require(amount > 0, "Amount must be greater than 0");
         require(duration > 0, "Duration must be greater than 0");
-        require(contractBalances >= amount, "Insufficient funds in contract");
-
+        require(contractBalances >= amount, "Balance contrat insuffisante");
+        require(address(this).balance >= amount, "Fond contrat insuffisant");
+        
         uint256 tauxInteret = findInterestRate(duration);
         uint256 interest = (amount * duration * tauxInteret) / 100; //
         require(address(msg.sender).balance >= interest, "Insufficient funds to borrow");
+        
 
         payable(msg.sender).transfer(amount);
         contractBalances -= amount;
@@ -82,15 +85,17 @@ contract fructificateur {
     }
 
     // Remboursement mensuel
-    function rembouserEmprun() public payable {
+    function rembouserEmprunt() public payable {
         require(emprunteur[msg.sender].dureeRestante > 0, "Aucun pret actif trouve");
-        
+        uint256 amount = msg.value;
+
         // Calcul du montant à rembourser chaque mois (capital + intérêts)
-        uint256 montantARecevoir = (emprunteur[msg.sender].montant + (emprunteur[msg.sender].montant * emprunteur[msg.sender].tauxInteret / 100)) / emprunteur[msg.sender].duree;
-        require(montantARecevoir <= address(msg.sender).balance, "Balance insuffisante");
+        uint256 montantARembourser= (emprunteur[msg.sender].montant + (emprunteur[msg.sender].montant * emprunteur[msg.sender].tauxInteret / 100)) / emprunteur[msg.sender].duree;
+        require(montantARembourser <= address(msg.sender).balance, "Balance insuffisante");
+        require(montantARembourser <= amount, "Valeur pour la transaction insuffisante");
 
         // Ajout du montant a la balance du contrat
-        contractBalances += montantARecevoir;
+        contractBalances += montantARembourser;
         emprunteur[msg.sender].dureeRestante--;
         
         if (emprunteur[msg.sender].dureeRestante == 0) {
@@ -106,9 +111,12 @@ contract fructificateur {
         uint256 montantARecevoir = (investisseur[msg.sender].montant + (investisseur[msg.sender].montant * investisseur[msg.sender].tauxInteret / 100)) / investisseur[msg.sender].duree;
         
         // Transfert du montant remboursé à l'investisseur
+        require(contractBalances >= montantARecevoir, "Balance contrat insuffisante");
+        require(address(this).balance >= montantARecevoir, "Fond du contract insuffisant");
         payable(msg.sender).transfer(montantARecevoir);
         investisseur[msg.sender].dureeRestante--;
-
+        contractBalances -= montantARecevoir;
+        
         if (investisseur[msg.sender].dureeRestante == 0) {
             delete investisseur[msg.sender];
         }
@@ -116,6 +124,10 @@ contract fructificateur {
         
     function getContractBalance() public view returns (uint256) {
         return contractBalances;
+    }
+
+    function getContractBalanceReelle() public view returns (uint256) {
+        return address(this).balance;
     }
 
     // Modificateur pour verifier si le message sender est le proprietaire du contrat
