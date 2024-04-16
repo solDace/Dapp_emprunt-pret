@@ -69,8 +69,8 @@ contract fructificateur {
         require(address(this).balance >= amount, "Fond contrat insuffisant");
         
         uint256 tauxInteret = findInterestRate(duration);
-        uint256 interest = (amount * duration * tauxInteret) / 100; //
-        require(address(msg.sender).balance >= interest, "Insufficient funds to borrow");
+        uint256 interest = (amount * duration * tauxInteret) / 100;
+        require(address(msg.sender).balance >= interest, "Balance requise insuffisante pour recevoir le pret");
         
 
         payable(msg.sender).transfer(amount);
@@ -92,9 +92,11 @@ contract fructificateur {
         // Calcul du montant à rembourser chaque mois (capital + intérêts)
         uint256 montantARembourser= (emprunteur[msg.sender].montant + (emprunteur[msg.sender].montant * emprunteur[msg.sender].tauxInteret / 100)) / emprunteur[msg.sender].duree;
         require(montantARembourser <= address(msg.sender).balance, "Balance insuffisante");
-        require(montantARembourser <= amount, "Valeur pour la transaction insuffisante");
+        require(montantARembourser <= amount, "Valeur envoyee avec la transaction est insuffisante");
 
-        // Ajout du montant a la balance du contrat
+        // rembourse au cas ca depasse montantARembourser
+        payable(address(msg.sender)).transfer(amount-montantARembourser);
+        
         contractBalances += montantARembourser;
         emprunteur[msg.sender].dureeRestante--;
         
@@ -113,6 +115,7 @@ contract fructificateur {
         // Transfert du montant remboursé à l'investisseur
         require(contractBalances >= montantARecevoir, "Balance contrat insuffisante");
         require(address(this).balance >= montantARecevoir, "Fond du contract insuffisant");
+        
         payable(msg.sender).transfer(montantARecevoir);
         investisseur[msg.sender].dureeRestante--;
         contractBalances -= montantARecevoir;
@@ -128,6 +131,11 @@ contract fructificateur {
 
     function getContractBalanceReelle() public view returns (uint256) {
         return address(this).balance;
+    }
+
+    //setContractBalances
+    function setContractBalances(uint256 _contractBalances) public onlyOwner payable{
+        contractBalances = _contractBalances;
     }
 
     // Modificateur pour verifier si le message sender est le proprietaire du contrat
