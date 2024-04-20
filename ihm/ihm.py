@@ -25,7 +25,7 @@ class WalletManager:
         data = f'{infura_api_key}:{infura_api_key_secret}'.encode('ascii')
         basic_auth_token = base64.b64encode(data).strip().decode('utf-8')
 
-        infura_sepolia_endpoint = f'https://sepolia.infura.io/v3/d7673ea500d44f6db368563a06856b57'
+        infura_sepolia_endpoint = f'https://sepolia.infura.io/v3/'
 
         headers = dict(Authorization=f'Basic {basic_auth_token}')
         return web3.Web3(web3.HTTPProvider(infura_sepolia_endpoint, request_kwargs=dict(headers=headers)))
