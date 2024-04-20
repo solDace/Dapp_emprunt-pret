@@ -8,7 +8,7 @@ class WalletManager:
     def __init__(self):
         self.w3 = self.__create_web3_instance()
         self.account = '0xe23B903Cd74F630fD87d504119682E3442f3D511'
-        self.account_private_key = 'b1d09f45f78e87a0227120b3e0ab2da7519b1cb258047965a54a8228e01620c0'
+        self.account_private_key = ''
         self.max_fee_per_gas = self.w3.to_wei('250', 'gwei')
         self.max_priority_fee_per_gas = self.w3.eth.max_priority_fee
         self.chain_id = 11155111
@@ -21,7 +21,7 @@ class WalletManager:
     @staticmethod
     def __create_web3_instance():
         infura_api_key = 'd7673ea500d44f6db368563a06856b57'
-        infura_api_key_secret = 'LWCY9XwWRyaZSLWtkncXYz6SQNqtoAXwhWDkthkDQ2amRYktyDAlyg'
+        infura_api_key_secret = ''
         data = f'{infura_api_key}:{infura_api_key_secret}'.encode('ascii')
         basic_auth_token = base64.b64encode(data).strip().decode('utf-8')
 
