@@ -11,10 +11,10 @@ class WalletManager:
         self.account_private_key = 'b1d09f45f78e87a0227120b3e0ab2da7519b1cb258047965a54a8228e01620c0'
         self.max_fee_per_gas = self.w3.to_wei('250', 'gwei')
         self.max_priority_fee_per_gas = self.w3.eth.max_priority_fee
-        self.chain_id = self.w3.eth.chain_id
+        self.chain_id = 11155111
         self.contract_address = '0x3F2c73a8be1385867d22e80668A125Cbd738f9Ab'
 
-        with open('../contracts/artifacts/fructificateur.json', 'r') as abi_file:
+        with open('../ABI/ABI.json', 'r') as abi_file:
             self.contract_abi = json.load(abi_file)
         self.contract = self.w3.eth.contract(address=to_checksum_address(self.contract_address), abi=self.contract_abi)
 
@@ -53,9 +53,11 @@ class WalletManager:
         if result['status'] != 1:
             raise RuntimeError('transaction failed: {tx_hash}')
 
-    def get_contract_balance(self):
-        balance = self.contract.functions.get().call()
+    def show_contract_balance(self):
+        balance = self.contract.functions.getContractBalance().call()
+        balance_reelle = self.contract.functions.getContractBalanceReelle().call()
         print("Balance du contrat:", balance)
+        print("Balance reelle du contrat:", balance_reelle)
 
     def investir_fonds(self):
         duration = int(input("Entrez la durée en mois: "))
@@ -83,45 +85,49 @@ class WalletManager:
         print("Transaction réussie. Montant retourné:", receipt['gasUsed'], "TX Hash:", tx_hash.hex())
 
     def add_fond_contract_balance(self):
-        new_balance = int(input("Entrez le nouveau solde du contrat: "))
-        # tx_hash = self.contract.functions.setContractBalances(new_balance).transact({'from': self.account})
-        # # receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
-        # self.send_eth(self.contract_address, new_balance)
-
+        new_balance = int(input("Entrez le solde a ajouter contrat en wei: "))
         gas_limit = 100000
 
+        old_balance = self.contract.functions.getContractBalance().call()
         # Détermine le prix du gaz
-        gas_price = self.w3.eth.gas_price
-        tx = self.contract.functions.addFondContractBalances(new_balance).build_transaction({
-            'chainId': 11155111,  # Mettez l'ID de la chaîne Ethereum correspondant ici
+        tx = self.contract.functions.addFondContractBalances(new_balance).build_transaction(
+            self.get_tansaction_dict(gas_limit, new_balance))
+
+        tx_hash = self.send_and_sign_tx(tx)
+        print("Transaction réussie. Nouveau solde du contrat:", old_balance + new_balance, "\nTX Hash:", tx_hash.hex())
+
+    def send_and_sign_tx(self, tx):
+        # Signe la transaction avec la clé privée du propriétaire
+        signed_tx = self.w3.eth.account.sign_transaction(tx, self.account_private_key)
+        # Envoie la transaction signée
+        tx_hash = self.w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+        return tx_hash
+
+    def get_tansaction_dict(self, gas_limit, new_balance):
+        return {
+            'chainId': self.chain_id,  # Mettez l'ID de la chaîne Ethereum correspondant ici
             'gas': gas_limit,
             'value': self.w3.to_wei(new_balance, 'wei'),  # Montant d'Ether à envoyer vers le contrat
             'nonce': self.w3.eth.get_transaction_count(to_checksum_address(self.account)),
-        })
-
-        # Signe la transaction avec la clé privée du propriétaire
-        signed_tx = self.w3.eth.account.sign_transaction(tx, self.account_private_key)
-
-        # Envoie la transaction signée
-        tx_hash = self.w3.eth.send_raw_transaction(signed_tx.rawTransaction)
-        print("Transaction réussie. Nouveau solde du contrat:", new_balance, "TX Hash:", tx_hash.hex())
+        }
 
 
 # Main function
 def main():
-    print("Bienvenue dans l'interface console pour le contrat Ethereum.")
+    print("\nBienvenue dans l'interface console pour le contrat Ethereum Fructificateur.")
     wm = WalletManager()
     while True:
+        print("\n\n================================")
         print("1. Obtenir la balance du contrat")
         print("2. Investir des fonds")
         print("3. Emprunter des fonds")
         print("4. Rembourser un emprunt")
         print("5. Retourner l'investissement")
-        print("6. Modifier le solde du contrat")
+        print("6. Ajouter du solde au contrat")
         print("7. Quitter")
         choice = input("Entrez votre choix: ")
         if choice == '1':
-            wm.get_contract_balance()
+            wm.show_contract_balance()
         elif choice == '2':
             wm.investir_fonds()
         elif choice == '3':
