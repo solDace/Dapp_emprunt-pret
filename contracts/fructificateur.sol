@@ -134,8 +134,8 @@ contract fructificateur {
     }
 
     //setContractBalances
-    function setContractBalances(uint256 _contractBalances) public onlyOwner payable{
-        contractBalances = _contractBalances;
+    function addFondContractBalances(uint256 _contractBalances) public onlyOwner payable{
+        contractBalances += _contractBalances;
     }
 
     // Modificateur pour verifier si le message sender est le proprietaire du contrat
