@@ -1,56 +1,64 @@
+from eth_utils import to_checksum_address
 from web3 import Web3
 import json
 
 # Connexion à un fournisseur Ethereum
-web3 = Web3(Web3.HTTPProvider('http://127.0.0.1:8545'))  # Mettez votre fournisseur Ethereum ici
+web3 = Web3(Web3.HTTPProvider('https://sepolia.infura.io/v3/d7673ea500d44f6db368563a06856b57'))  # Mettez votre fournisseur Ethereum ici
 
 # Adresse de votre contrat
-contract_address = '0x123456789ABCDEF...'
+contract_address = to_checksum_address('0xf0aa0712f288a9ae1dec27299a9a213b803c4cf7')
 
 # Adresse du compte qui interagit avec le contrat
-account_address = '0xABCDEF123456789...'
+account_address = '0xe23B903Cd74F630fD87d504119682E3442f3D511'
 
 # Chargement du contrat ABI
-with open('contracts/artifacts/fructificateur.json', 'r') as abi_file:
+with open('../contracts/artifacts/fructificateur.json', 'r') as abi_file:
     contract_abi = json.load(abi_file)
 
 # Instanciation du contrat
 contract = web3.eth.contract(address=contract_address, abi=contract_abi)
+
 
 # Exemple d'appel de fonction sur le contrat
 def get_contract_balance():
     balance = contract.functions.getContractBalance().call()
     print("Balance du contrat:", balance)
 
+
 def investir_fonds():
     duration = int(input("Entrez la durée en mois: "))
     amount = int(input("Entrez le montant à investir: "))
     tx_hash = contract.functions.investirFonds(duration).transact({'from': account_address, 'value': amount})
-    receipt = web3.eth.waitForTransactionReceipt(tx_hash)
+    receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
     print("Transaction réussie. Montant investi:", amount, "TX Hash:", tx_hash.hex())
+
 
 def emprunter_fonds():
     duration = int(input("Entrez la durée en mois: "))
     amount = int(input("Entrez le montant à emprunter: "))
     tx_hash = contract.functions.emprunterFonds(amount, duration).transact({'from': account_address, 'value': amount})
-    receipt = web3.eth.waitForTransactionReceipt(tx_hash)
+    receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
     print("Transaction réussie. Montant emprunté:", amount, "TX Hash:", tx_hash.hex())
+
 
 def rembourser_emprunt():
     tx_hash = contract.functions.rembouserEmprunt().transact({'from': account_address, 'value': 0})
-    receipt = web3.eth.waitForTransactionReceipt(tx_hash)
+    receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
     print("Transaction réussie. Montant remboursé:", receipt['gasUsed'], "TX Hash:", tx_hash.hex())
+
 
 def retour_investissement():
     tx_hash = contract.functions.retourInvestissement().transact({'from': account_address, 'value': 0})
-    receipt = web3.eth.waitForTransactionReceipt(tx_hash)
+    receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
     print("Transaction réussie. Montant retourné:", receipt['gasUsed'], "TX Hash:", tx_hash.hex())
+
 
 def set_contract_balance():
     new_balance = int(input("Entrez le nouveau solde du contrat: "))
     tx_hash = contract.functions.setContractBalances(new_balance).transact({'from': account_address})
-    receipt = web3.eth.waitForTransactionReceipt(tx_hash)
+    receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
     print("Transaction réussie. Nouveau solde du contrat:", new_balance, "TX Hash:", tx_hash.hex())
+
 
 # Main function
 def main():
@@ -81,6 +89,7 @@ def main():
             break
         else:
             print("Choix invalide. Veuillez entrer un numéro valide.")
+
 
 if __name__ == "__main__":
     main()
